@@ -24,7 +24,6 @@ from CIOS . CPU . Profiler import Profiler
 from CIOS . CPU . Daemon   import Daemon
 from CIOS . CPU . Feeder   import CpuFeeder , ConfigureCpu
 from CIOS . CPU . Analyzer import Analyzer
-# from CIOS . CPU . CpuProfiler import Analyzer
 from CIOS . CPU . CpuChart import CpuChart
 
 # Import PyQt5 interface
@@ -37,10 +36,23 @@ from PyQt5.QtWidgets import QApplication , QWidget , qApp , QAction , QActionGro
 from PyQt5.QtWidgets import QSystemTrayIcon , QMenu , QGraphicsView , QGraphicsScene
 from PyQt5.QtWidgets import QGraphicsItem , QGraphicsPolygonItem
 
-Settings     = { }
-Locales      = { }
-Translations = { }
-Hosts        = { }
+Settings            = { }
+Locales             = { }
+Translations        = { }
+Hosts               = { }
+Httpd               = None
+Ghost               = None
+Tray                = None
+CpuProfilerSettings =                      { \
+  "Hostname"        : "Cuisine"            , \
+  "Path"            : "D:/Temp/CPU/Myself" , \
+  "Lines"           : 900                  , \
+  "Interval"        : 334                  , \
+  "TimeZone"        : "Asia/Taipei"        , \
+  "Decide"          : DecideRunning        , \
+  "Port"            : 16319                , \
+  "Running"         : True                 , \
+}
 
 def ActualFile ( filename ) :
   return os . path . dirname ( os . path . abspath (__file__) ) + "/" + filename
@@ -56,6 +68,27 @@ def LoadJSON ( Filename ) :
   BODY = TEXT . decode ( "utf-8" )
   return json . loads ( BODY )
 
+# HTTP Feeder
+class PrivateFeederThreadedHTTPServer ( ThreadingMixIn , HTTPServer ) :
+  pass
+
+def StopRunning ( ) :
+  global Httpd
+  Httpd . shutdown ( )
+  CpuProfilerSettings [ "Running" ] = False
+
+def DecideRunning ( ) :
+  global CpuProfilerSettings
+  return CpuProfilerSettings [ "Running" ]
+
+def RunCpuFeeder ( ) :
+  global Httpd
+  global Ghost
+  global CpuProfilerSettings
+  Port  = CpuProfilerSettings [ "Port" ]
+  Httpd = PrivateFeederThreadedHTTPServer ( ( '0.0.0.0' , Port ) , CpuFeeder )
+  Httpd . serve_forever ( )
+
 """ 系統選單 """
 class CpuProfilerMenu ( QSystemTrayIcon ) :
   # emitShowUser = pyqtSignal ( bool , dict )
@@ -68,7 +101,13 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     self . activated . connect ( self . onTrayActivated )
     self . Actions = { }
     # Configure Menu
-    menu          = QMenu        ( parent )
+    self . Menu = QMenu ( parent      )
+    self . PrepareMenu  ( self . Menu )
+
+  def PrepareMenu ( self , menu ) :
+    global Settings
+    global Locales
+    global Translations
     # 主機
     self          . hostsMenu    ( menu   )
     # 設置語言
@@ -78,13 +117,13 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     # Start
     startAction   = menu . addAction ( Translations [ "Menu::Start" ] )
     # startAction   . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Quit" ] ) ) )
-    # startAction   . triggered . connect ( self . Quit )
+    startAction   . triggered . connect ( self . Start )
     self . Actions [ "Start" ] = startAction
     # Stop
     stopAction    = menu . addAction ( Translations [ "Menu::Stop" ] )
     # stopAction    . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Quit" ] ) ) )
-    # stopAction    . triggered . connect ( self . Quit )
-    stopAction    . setVisible ( False )
+    stopAction    . triggered . connect ( self . Stop )
+    # stopAction    . setVisible ( False )
     self . Actions [ "Stop"  ] = stopAction
     # Exit
     exitAction    = menu . addAction ( Translations [ "Menu::Quit" ] )
@@ -93,7 +132,6 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     self . Actions [ "Exit"  ] = exitAction
     #
     self . setContextMenu ( menu )
-    self . Menu = menu
 
   def languageMenu ( self , menu ) :
     return True
@@ -105,9 +143,36 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     if ( reason == 3 ) :
       self . Menu . exec_ ( QCursor . pos ( ) )
 
+  def Start ( self ) :
+    threading . Thread ( target = CpuDaemonMain ) . start ( )
+
+  def Stop ( self ) :
+    StopRunning ( )
+
   def Quit ( self ) :
     self . hide ( )
     qApp . quit ( )
+
+def CpuDaemonMain ( ) :
+  global Ghost
+  global CpuProfilerSettings
+  Logger    = logging . getLogger (                         )
+  Ghost     = Daemon              ( CpuProfilerSettings     )
+  Path      = CpuProfilerSettings [ "Path"     ]
+  TZ        = CpuProfilerSettings [ "TimeZone" ]
+  ConfigureCpu                    ( { "Daemon"   : Ghost       ,
+                                      "Stop"     : StopRunning ,
+                                      "Path"     : Path        ,
+                                      "TimeZone" : TZ          ,
+                                      "Username" : "foxman"    ,
+                                      "Password" : "la0marina" ,
+                                      "Verify"   : False       ,
+                                      } )
+  # 啟動網路效能數據提供
+  threading . Thread              ( target = RunCpuFeeder   ) . start ( )
+  # 執行機器效能監視器
+  Ghost     . run                 (                         )
+  Logger    . debug               ( "Complete CPU Profiler" )
 
 def CpuProfilerMain ( ) :
   global Settings
@@ -147,8 +212,9 @@ def CpuProfilerMain ( ) :
   app      = QApplication    ( sys . argv                                   )
   trayMenu = CpuProfilerMenu ( QIcon ( ActualFile ( Settings [ "Icon" ] ) ) )
   trayMenu . show            (                                              )
+  Tray     = trayMenu
   # 啟動機器效能監視器
-  # 啟動網路效能數據提供
+  threading . Thread         ( target = CpuDaemonMain ) . start ( )
   sys      . exit            ( app . exec_ ( )                              )
   # 結束
 
