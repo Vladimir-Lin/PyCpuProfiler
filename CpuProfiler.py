@@ -65,7 +65,7 @@ def WriteSettings ( ) :
   UserConf = Settings [ "Home" ]
   UserConf = f"{UserConf}/CpuProfiler/settings.json"
   for K in KEYs :
-    if ( K not in [ "Home" , "" , "" ] ) :
+    if ( K not in [ "Home" , "Root" ] ) :
       SS [ K ] = Settings [ K ]
   TEXT = json . dumps ( SS )
   with open ( UserConf , "w" ) as settingsFile :
@@ -106,6 +106,7 @@ def RunCpuFeeder ( ) :
 CpuProfilerSettings =                      { \
   "Hostname"        : "Cuisine"            , \
   "Path"            : "D:/Temp/CPU/Myself" , \
+  "Root"            : ""                   , \
   "Lines"           : 900                  , \
   "Interval"        : 334                  , \
   "TimeZone"        : "Asia/Taipei"        , \
@@ -230,17 +231,22 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
 def CpuDaemonMain ( ) :
   global Ghost
   global CpuProfilerSettings
+  global Settings
   global Tray
   Logger    = logging . getLogger (                         )
   Ghost     = Daemon              ( CpuProfilerSettings     )
   Path      = CpuProfilerSettings [ "Path"     ]
+  Root      = CpuProfilerSettings [ "Root"     ]
   TZ        = CpuProfilerSettings [ "TimeZone" ]
+  Username  = Settings            [ "Username" ]
+  Password  = Settings            [ "Password" ]
   ConfigureCpu                    ( { "Daemon"   : Ghost       ,
                                       "Stop"     : StopRunning ,
                                       "Path"     : Path        ,
                                       "TimeZone" : TZ          ,
-                                      "Username" : "foxman"    ,
-                                      "Password" : "la0marina" ,
+                                      "Root"     : Root        ,
+                                      "Username" : Username    ,
+                                      "Password" : Password    ,
                                       "Verify"   : False       ,
                                       } )
   # 啟動網路效能數據提供
@@ -261,6 +267,7 @@ def CpuProfilerMain ( ) :
   global Tray
   Settings     = LoadJSON   ( ActualFile ( "settings.json"        ) )
   Locales      = LoadJSON   ( ActualFile ( "locales/locales.json" ) )
+  Settings [ "Root" ] = os . path . dirname ( os . path . abspath (__file__) )
   if ( Settings [ "UserDirectory" ] > 0 ) :
     Settings [ "Home" ] = str ( Path . home ( ) )
   else :
@@ -276,6 +283,7 @@ def CpuProfilerMain ( ) :
     KEYs   = STS . keys      (                                              )
     for k in KEYs                                                           :
       Settings [ k ] = STS   [ k                                            ]
+  CpuProfilerSettings [ "Root" ] = Settings [ "Root" ]
   # 讀取翻譯檔
   Language     = Settings   [ "Language"                            ]
   TRFILE       = f"locales/{Language}/translations.json"
