@@ -39,7 +39,7 @@ from PyQt5.QtWidgets import QGraphicsItem , QGraphicsPolygonItem
 Settings            = { }
 Locales             = { }
 Translations        = { }
-Hosts               = { }
+Hosts               = [ ]
 Httpd               = None
 Ghost               = None
 Tray                = None
@@ -212,7 +212,30 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     return True
 
   def hostsMenu ( self , menu ) :
+    global Settings
+    global Hosts
+    global Translations
+    if ( len ( Hosts ) <= 0 ) :
+      return False
+    #
+    hostMenu  = menu . addMenu      ( Translations [ "Menu::Machines" ] )
+    hostGroup = QActionGroup        ( hostMenu                          )
+    hostGroup . setEnabled          ( True                              )
+    hostGroup . setExclusive        ( False                             )
+    hostGroup . triggered . connect ( self . doHostTriggered            )
+    #
+    for H in Hosts :
+      hostAction = QAction   ( H [ "Hostname" ] , hostMenu )
+      hostMenu   . addAction ( hostAction )
+      hostGroup  . addAction ( hostAction )
+    #
+    self . Actions [ "Machines"      ] = hostMenu
+    self . Actions [ "MachinesGroup" ] = hostGroup
     return True
+
+  def doHostTriggered ( self , action ) :
+    global Hosts
+    Machine = action . text ( )
 
   def onTrayActivated ( self , reason ) :
     if ( reason == 3 ) :
