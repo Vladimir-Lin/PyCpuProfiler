@@ -1,7 +1,5 @@
 SOURCES += $${PWD}/*.php
 SOURCES += $${PWD}/*.js
-SOURCES += $${PWD}/*.bat
-SOURCES += $${PWD}/*.cmd
 SOURCES += $${PWD}/*.css
 SOURCES += $${PWD}/*.html
 SOURCES += $${PWD}/*.txt
@@ -10,7 +8,10 @@ SOURCES += $${PWD}/*.py
 SOURCES += $${PWD}/*.pl
 SOURCES += $${PWD}/*.rb
 SOURCES += $${PWD}/*.rs
-SOURCES += $${PWD}/*.md
+SOURCES += $${PWD}/*.bat
 
-include ($${PWD}/images/images.pri)
-include ($${PWD}/locales/locales.pri)
+include ($${PWD}/32x32/32x32.pri)
+include ($${PWD}/64x64/64x64.pri)
+include ($${PWD}/128x128/128x128.pri)
+include ($${PWD}/others/others.pri)
+include ($${PWD}/svg/svg.pri)
