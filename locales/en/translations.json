@@ -1,2 +1,6 @@
 {
+  "Menu::Title" : "CPU Profiler" ,
+  "Menu::Start" : "Start"        ,
+  "Menu::Stop"  : "Stop"         ,
+  "Menu::Quit"  : "Quit"
 }

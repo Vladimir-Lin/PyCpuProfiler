@@ -1,2 +1,6 @@
 {
+  "Menu::Title" : "機器效能監視器" ,
+  "Menu::Start" : "啟動監視效能" ,
+  "Menu::Stop"  : "停止監視效能" ,
+  "Menu::Quit"  : "離開"
 }

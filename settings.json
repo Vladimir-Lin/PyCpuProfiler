@@ -1,5 +1,12 @@
 {
-  "Icon"          : "images/32x32/icon.png" ,
-  "Language"      : "zh-TW"                 ,
-  "UserDirectory" : 0
+  "Icon"          : "images/32x32/icon.png"           ,
+  "Language"      : "zh-TW"                           ,
+  "Debug"         : "DEBUG"                           ,
+  "LOG"           : "D:/Temp/CPU/Log/CpuProfiler.txt" ,
+  "Console"       : 1                                 ,
+  "Port"          : 16319                             ,
+  "UserDirectory" : 0                                 ,
+  "Menu"          :                                   {
+     "Quit"       : "images/32x32/delete.png"
+  }
 }
