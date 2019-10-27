@@ -1,2 +1,5 @@
 {
+  "Icon"          : "images/32x32/icon.png" ,
+  "Language"      : "zh-TW"                 ,
+  "UserDirectory" : 0
 }
