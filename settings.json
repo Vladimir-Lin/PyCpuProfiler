@@ -10,6 +10,8 @@
   "Port"          : 16319                             ,
   "UserDirectory" : 0                                 ,
   "Menu"          :                                   {
+     "Start"      : "images/32x32/play.png"           ,
+     "Stop"       : "images/32x32/stop.png"           ,
      "Quit"       : "images/32x32/delete.png"
   }
 }

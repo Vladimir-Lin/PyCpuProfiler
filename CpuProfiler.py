@@ -58,11 +58,26 @@ def LoadJSON ( Filename ) :
   BODY = TEXT . decode ( "utf-8" )
   return json . loads ( BODY )
 
+def WriteSettings ( ) :
+  global Settings
+  KEYs = Settings . keys ( )
+  SS   = { }
+  UserConf = Settings [ "Home" ]
+  UserConf = f"{UserConf}/CpuProfiler/settings.json"
+  for K in KEYs :
+    if ( K not in [ "Home" , "" , "" ] ) :
+      SS [ K ] = Settings [ K ]
+  TEXT = json . dumps ( SS )
+  with open ( UserConf , "w" ) as settingsFile :
+    settingsFile . write ( TEXT )
+  return True
+
 # HTTP Feeder
 class PrivateFeederThreadedHTTPServer ( ThreadingMixIn , HTTPServer ) :
   pass
 
 def StartRunning ( ) :
+  CpuProfilerSettings [ "Running" ] = True
   threading . Thread ( target = CpuDaemonMain ) . start ( )
   Tray . Actions [ "Start" ] . setVisible ( False )
   Tray . Actions [ "Stop"  ] . setVisible ( True  )
@@ -109,6 +124,7 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     QSystemTrayIcon . __init__ ( self , icon , parent )
     self . setToolTip ( Translations [ "Menu::Title" ] )
     self . activated . connect ( self . onTrayActivated )
+    self . MyParent = parent
     self . Actions = { }
     # Configure Menu
     self . Menu = QMenu ( parent      )
@@ -126,24 +142,72 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     menu          . addSeparator (        )
     # Start
     startAction   = menu . addAction ( Translations [ "Menu::Start" ] )
-    # startAction   . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Quit" ] ) ) )
+    if ( "Start" in Settings [ "Menu" ] ) :
+      startAction   . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Start" ] ) ) )
     startAction   . triggered . connect ( self . Start )
     self . Actions [ "Start" ] = startAction
     # Stop
     stopAction    = menu . addAction ( Translations [ "Menu::Stop" ] )
-    # stopAction    . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Quit" ] ) ) )
+    if ( "Stop" in Settings [ "Menu" ] ) :
+      stopAction    . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Stop" ] ) ) )
     stopAction    . triggered . connect ( self . Stop )
     # stopAction    . setVisible ( False )
     self . Actions [ "Stop"  ] = stopAction
     # Exit
     exitAction    = menu . addAction ( Translations [ "Menu::Quit" ] )
-    exitAction    . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Quit" ] ) ) )
+    if ( "Quit" in Settings [ "Menu" ] ) :
+      exitAction    . setIcon ( QIcon ( ActualFile ( Settings [ "Menu" ] [ "Quit" ] ) ) )
     exitAction    . triggered . connect ( self . Quit )
     self . Actions [ "Exit"  ] = exitAction
     #
     self . setContextMenu ( menu )
 
   def languageMenu ( self , menu ) :
+    global Settings
+    global Locales
+    global Translations
+    #
+    LANG = Settings [ "Language" ]
+    #
+    langMenu  = menu      . addMenu ( Translations [ "Menu::Language" ] )
+    langGroup = QActionGroup        ( langMenu                          )
+    langGroup . setExclusive        ( True                              )
+    langGroup . triggered . connect ( self . doLanguageTriggered        )
+    #
+    KEYs = Locales . keys ( )
+    for K in KEYs :
+      langAction = QAction   ( Locales [ K ]             ,
+                               langMenu                  ,
+                               checkable = True          ,
+                               checked   = ( LANG == K ) )
+      langAction . setData   ( K          )
+      langMenu   . addAction ( langAction )
+      langGroup  . addAction ( langAction )
+    #
+    self . Actions [ "Language"      ] = langMenu
+    self . Actions [ "LanguageGroup" ] = langGroup
+    return True
+
+  def doLanguageTriggered ( self , action ) :
+    global Settings
+    global Locales
+    global Translations
+    Settings [ "Language" ] = action . data ( )
+    Language     = Settings   [ "Language"            ]
+    TRFILE       = f"locales/{Language}/translations.json"
+    Translations = LoadJSON   ( ActualFile ( TRFILE ) )
+    WriteSettings ( )
+    # Configure Menu
+    self . Menu = QMenu ( self . MyParent )
+    self . PrepareMenu  ( self . Menu     )
+    if ( CpuProfilerSettings [ "Running" ] ) :
+      self . Actions [ "Start" ] . setVisible ( False )
+      self . Actions [ "Stop"  ] . setVisible ( True  )
+      self . Actions [ "Exit"  ] . setVisible ( False )
+    else :
+      self . Actions [ "Start" ] . setVisible ( True  )
+      self . Actions [ "Stop"  ] . setVisible ( False )
+      self . Actions [ "Exit"  ] . setVisible ( True  )
     return True
 
   def hostsMenu ( self , menu ) :
@@ -166,6 +230,7 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
 def CpuDaemonMain ( ) :
   global Ghost
   global CpuProfilerSettings
+  global Tray
   Logger    = logging . getLogger (                         )
   Ghost     = Daemon              ( CpuProfilerSettings     )
   Path      = CpuProfilerSettings [ "Path"     ]
@@ -193,11 +258,9 @@ def CpuProfilerMain ( ) :
   global Locales
   global Translations
   global Hosts
+  global Tray
   Settings     = LoadJSON   ( ActualFile ( "settings.json"        ) )
   Locales      = LoadJSON   ( ActualFile ( "locales/locales.json" ) )
-  Language     = Settings   [ "Language"                            ]
-  TRFILE       = f"locales/{Language}/translations.json"
-  Translations = LoadJSON   ( ActualFile ( TRFILE                 ) )
   if ( Settings [ "UserDirectory" ] > 0 ) :
     Settings [ "Home" ] = str ( Path . home ( ) )
   else :
@@ -213,6 +276,10 @@ def CpuProfilerMain ( ) :
     KEYs   = STS . keys      (                                              )
     for k in KEYs                                                           :
       Settings [ k ] = STS   [ k                                            ]
+  # 讀取翻譯檔
+  Language     = Settings   [ "Language"                            ]
+  TRFILE       = f"locales/{Language}/translations.json"
+  Translations = LoadJSON   ( ActualFile ( TRFILE                 ) )
   # 設定除錯機制
   isConsole   = False
   if ( Settings [ "Console" ] > 0 ) :
