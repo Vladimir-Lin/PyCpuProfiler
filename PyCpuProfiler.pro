@@ -1,6 +1,7 @@
 SOURCES += $${PWD}/*.php
 SOURCES += $${PWD}/*.js
 SOURCES += $${PWD}/*.bat
+SOURCES += $${PWD}/*.cmd
 SOURCES += $${PWD}/*.css
 SOURCES += $${PWD}/*.html
 SOURCES += $${PWD}/*.txt
