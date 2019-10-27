@@ -43,16 +43,6 @@ Hosts               = { }
 Httpd               = None
 Ghost               = None
 Tray                = None
-CpuProfilerSettings =                      { \
-  "Hostname"        : "Cuisine"            , \
-  "Path"            : "D:/Temp/CPU/Myself" , \
-  "Lines"           : 900                  , \
-  "Interval"        : 334                  , \
-  "TimeZone"        : "Asia/Taipei"        , \
-  "Decide"          : DecideRunning        , \
-  "Port"            : 16319                , \
-  "Running"         : True                 , \
-}
 
 def ActualFile ( filename ) :
   return os . path . dirname ( os . path . abspath (__file__) ) + "/" + filename
@@ -72,10 +62,19 @@ def LoadJSON ( Filename ) :
 class PrivateFeederThreadedHTTPServer ( ThreadingMixIn , HTTPServer ) :
   pass
 
+def StartRunning ( ) :
+  threading . Thread ( target = CpuDaemonMain ) . start ( )
+  Tray . Actions [ "Start" ] . setVisible ( False )
+  Tray . Actions [ "Stop"  ] . setVisible ( True  )
+  Tray . Actions [ "Exit"  ] . setVisible ( False )
+
 def StopRunning ( ) :
   global Httpd
   Httpd . shutdown ( )
   CpuProfilerSettings [ "Running" ] = False
+  Tray  . Actions [ "Start" ] . setVisible ( True  )
+  Tray  . Actions [ "Stop"  ] . setVisible ( False )
+  Tray  . Actions [ "Exit"  ] . setVisible ( True  )
 
 def DecideRunning ( ) :
   global CpuProfilerSettings
@@ -88,6 +87,17 @@ def RunCpuFeeder ( ) :
   Port  = CpuProfilerSettings [ "Port" ]
   Httpd = PrivateFeederThreadedHTTPServer ( ( '0.0.0.0' , Port ) , CpuFeeder )
   Httpd . serve_forever ( )
+
+CpuProfilerSettings =                      { \
+  "Hostname"        : "Cuisine"            , \
+  "Path"            : "D:/Temp/CPU/Myself" , \
+  "Lines"           : 900                  , \
+  "Interval"        : 334                  , \
+  "TimeZone"        : "Asia/Taipei"        , \
+  "Decide"          : DecideRunning        , \
+  "Port"            : 16319                , \
+  "Running"         : True                 , \
+}
 
 """ 系統選單 """
 class CpuProfilerMenu ( QSystemTrayIcon ) :
@@ -144,7 +154,7 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
       self . Menu . exec_ ( QCursor . pos ( ) )
 
   def Start ( self ) :
-    threading . Thread ( target = CpuDaemonMain ) . start ( )
+    StartRunning ( )
 
   def Stop ( self ) :
     StopRunning ( )
@@ -170,6 +180,10 @@ def CpuDaemonMain ( ) :
                                       } )
   # 啟動網路效能數據提供
   threading . Thread              ( target = RunCpuFeeder   ) . start ( )
+  # 設定選單
+  Tray      . Actions [ "Start" ] . setVisible ( False )
+  Tray      . Actions [ "Stop"  ] . setVisible ( True  )
+  Tray      . Actions [ "Exit"  ] . setVisible ( False )
   # 執行機器效能監視器
   Ghost     . run                 (                         )
   Logger    . debug               ( "Complete CPU Profiler" )
