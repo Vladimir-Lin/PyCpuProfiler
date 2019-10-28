@@ -251,9 +251,9 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     global Hosts
     machineName = action . data (                  )
     Myself      = ActualFile    ( "CpuProfiler.py" )
-    # CMD         = f"start pythonw {Myself} --machine=\"{machineName}\""
+    CMD         = f"start pythonw {Myself} --machine=\"{machineName}\""
     # CMD         = f"start python {Myself} --machine=\"{machineName}\""
-    CMD         = f"python {Myself} --machine=\"{machineName}\""
+    # CMD         = f"python {Myself} --machine=\"{machineName}\""
     os . system                 ( CMD              )
     return True
 
