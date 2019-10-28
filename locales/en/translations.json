@@ -2,6 +2,7 @@
   "Menu::Title"    : "CPU Profiler" ,
   "Menu::Language" : "Language"     ,
   "Menu::Machines" : "Machines"     ,
+  "Menu::Debugger" : "Debug"        ,
   "Menu::Start"    : "Start"        ,
   "Menu::Stop"     : "Stop"         ,
   "Menu::Quit"     : "Quit"

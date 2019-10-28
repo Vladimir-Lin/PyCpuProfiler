@@ -140,6 +140,8 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     self          . hostsMenu    ( menu   )
     # 設置語言
     self          . languageMenu ( menu   )
+    # 設置除錯
+    self          . debuggerMenu ( menu   )
     #
     menu          . addSeparator (        )
     # Start
@@ -242,6 +244,70 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     CMD         = f"start pythonw {Myself} --machine=\"{machineName}\""
     # CMD         = f"{Myself} --machine=\"{machineName}\""
     os . system                 ( CMD              )
+    return True
+
+  def debuggerMenu ( self , menu ) :
+    global Settings
+    global Hosts
+    global Translations
+    DBG           = Settings [ "Debug" ]
+    debugMenu     = menu      . addMenu ( Translations [ "Menu::Debugger" ] )
+    debugGroup    = QActionGroup ( debugMenu )
+    debugGroup    . setExclusive(True)
+    debugGroup    . triggered . connect ( self . doDebugTriggered )
+    # NOTSET
+    dbgAction     = QAction      ( "Nothing" , debugMenu , checkable= True , checked = ( "NOTSET" == DBG ) )
+    debugMenu     . addAction    ( dbgAction )
+    debugGroup    . addAction    ( dbgAction )
+    # DEBUG
+    dbgAction     = QAction      ( "Debug" , debugMenu , checkable= True , checked = ( "DEBUG" == DBG ) )
+    debugMenu     . addAction    ( dbgAction )
+    debugGroup    . addAction    ( dbgAction )
+    # INFO
+    dbgAction     = QAction      ( "Information" , debugMenu , checkable= True , checked = ( "INFO" == DBG ) )
+    debugMenu     . addAction    ( dbgAction )
+    debugGroup    . addAction    ( dbgAction )
+    # WARNING
+    dbgAction     = QAction      ( "Warning" , debugMenu , checkable= True , checked = ( "WARNING" == DBG ) )
+    debugMenu     . addAction    ( dbgAction )
+    debugGroup    . addAction    ( dbgAction )
+    # ERROR
+    dbgAction     = QAction      ( "Error" , debugMenu , checkable= True , checked = ( "ERROR" == DBG ) )
+    debugMenu     . addAction    ( dbgAction )
+    debugGroup    . addAction    ( dbgAction )
+    # CRITICAL
+    dbgAction     = QAction      ( "Critical" , debugMenu , checkable= True , checked = ( "CRITICAL" == DBG ) )
+    debugMenu     . addAction    ( dbgAction )
+    debugGroup    . addAction    ( dbgAction )
+    #
+    self . Actions [ "Debugger"      ] = debugMenu
+    self . Actions [ "DebuggerGroup" ] = debugGroup
+    return True
+
+  def doDebugTriggered ( self , action ) :
+    Logger = logging . getLogger ( )
+    DMSG   = action . text ( )
+    Logger . info ( f"Switch logging to {DMSG}" )
+    if   ( "Nothing"     == DMSG ) :
+      Logger . setLevel ( logging . NOTSET   )
+      Settings [ "Debug" ] = "NOTSET"
+    elif ( "Debug"       == DMSG ) :
+      Logger . setLevel ( logging . DEBUG    )
+      Settings [ "Debug" ] = "DEBUG"
+    elif ( "Information" == DMSG ) :
+      Logger . setLevel ( logging . INFO     )
+      Settings [ "Debug" ] = "INFO"
+    elif ( "Warning"     == DMSG ) :
+      Logger . setLevel ( logging . WARNING  )
+      Settings [ "Debug" ] = "WARNING"
+    elif ( "Error"       == DMSG ) :
+      Logger . setLevel ( logging . ERROR    )
+      Settings [ "Debug" ] = "ERROR"
+    elif ( "Critical"    == DMSG ) :
+      Logger . setLevel ( logging . CRITICAL )
+      Settings [ "Debug" ] = "CRITICAL"
+    WriteSettings ( )
+    return True
 
   def onTrayActivated ( self , reason ) :
     if ( reason == 3 ) :
