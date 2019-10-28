@@ -1,12 +1,12 @@
 {
   "Icon"          : "images/32x32/icon.png"           ,
   "Language"      : "zh-TW"                           ,
-  "Debug"         : "NOTSET"                          ,
+  "Debug"         : "DEBUG"                           ,
   "LOG"           : "D:/Temp/CPU/Log/CpuProfiler.txt" ,
   "TimeZone"      : "Asia/Taipei"                     ,
   "Username"      : "foxman"                          ,
   "Password"      : "la0marina"                       ,
-  "Console"       : 0                                 ,
+  "Console"       : 1                                 ,
   "Port"          : 16319                             ,
   "UserDirectory" : 0                                 ,
   "Menu"          :                                   {

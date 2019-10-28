@@ -43,6 +43,7 @@ Hosts               = [ ]
 Httpd               = None
 Ghost               = None
 Tray                = None
+Machine             = None
 
 def ActualFile ( filename ) :
   return os . path . dirname ( os . path . abspath (__file__) ) + "/" + filename
@@ -233,9 +234,14 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     self . Actions [ "MachinesGroup" ] = hostGroup
     return True
 
-  def doHostTriggered ( self , action ) :
+  def doHostTriggered           ( self , action    ) :
+    global Settings
     global Hosts
-    Machine = action . text ( )
+    machineName = action . text (                  )
+    Myself      = ActualFile    ( "CpuProfiler.py" )
+    CMD         = f"start pythonw {Myself} --machine=\"{machineName}\""
+    # CMD         = f"{Myself} --machine=\"{machineName}\""
+    os . system                 ( CMD              )
 
   def onTrayActivated ( self , reason ) :
     if ( reason == 3 ) :
@@ -282,12 +288,14 @@ def CpuDaemonMain ( ) :
   Ghost     . run                 (                         )
   Logger    . debug               ( "Complete CPU Profiler" )
 
-def CpuProfilerMain ( ) :
+def ConfigureCpuProfiler ( ) :
+  #
   global Settings
   global Locales
   global Translations
   global Hosts
   global Tray
+  #
   Settings     = LoadJSON   ( ActualFile ( "settings.json"        ) )
   Locales      = LoadJSON   ( ActualFile ( "locales/locales.json" ) )
   Settings [ "Root" ] = os . path . dirname ( os . path . abspath (__file__) )
@@ -320,6 +328,17 @@ def CpuProfilerMain ( ) :
     "LOG"     : Settings [ "LOG"   ] ,
     "Console" : isConsole            ,
   } )
+  return True
+
+def CpuProfilerMain ( ) :
+  #
+  global Settings
+  global Locales
+  global Translations
+  global Hosts
+  global Tray
+  #
+  ConfigureCpuProfiler ( )
   # 啟動選單
   app      = QApplication    ( sys . argv                                   )
   trayMenu = CpuProfilerMenu ( QIcon ( ActualFile ( Settings [ "Icon" ] ) ) )
@@ -329,6 +348,56 @@ def CpuProfilerMain ( ) :
   threading . Thread         ( target = CpuDaemonMain ) . start ( )
   sys      . exit            ( app . exec_ ( )                              )
   # 結束
+  return True
+
+def CpuProfilerView ( ) :
+  #
+  global Settings
+  global Locales
+  global Translations
+  global Hosts
+  global Tray
+  #
+  ConfigureCpuProfiler ( )
+  #
+  app      = QApplication               ( sys . argv      )
+  # 設定資料
+  settings =                            {                 }
+  screen   = app    . primaryScreen     (                 )
+  rect     = screen . availableGeometry (                 )
+  size     = rect   . size              (                 )
+  settings [ "Width"  ] = size . width  (                 )
+  settings [ "Height" ] = size . height (                 )
+  settings [ "Path"   ] = "D:/Temp/CPU/Cuisine"
+  settings [ "URL"    ] = "http://192.168.0.98:16319"
+  # 啟動CPU Chart
+  w        = CpuChart                   ( settings        )
+  w        . startup                    (                 )
+  sys      . exit                       ( app . exec_ ( ) )
+  return True
+
+def SayCpuProfilerHelp ( ) :
+  print ( "CpuProfiler.py -v (--help Help) -m MachineName (--machine=MachineName)" )
+  return
+
+def GetOptions ( argv ) :
+  global Machine
+  try :
+    opts, args = getopt . getopt ( argv , "m:h" , [ "machine=" , "help" ] )
+  except getopt . GetoptError :
+    SayCpuProfilerHelp ( )
+    sys . exit ( 2 )
+  for opt , arg in opts :
+    if opt in ( "-v" , "--help" ) :
+      SayCpuProfilerHelp ( )
+      sys . exit ( 0 )
+    elif opt in ( "-m" , "--machine" ) :
+      Machine = arg
+  return True
 
 if __name__ == '__main__':
-  CpuProfilerMain ( )
+  GetOptions        ( sys . argv [ 1: ] )
+  if                ( None == Machine   ) :
+    CpuProfilerMain (                   )
+  else :
+    CpuProfilerView (                   )
