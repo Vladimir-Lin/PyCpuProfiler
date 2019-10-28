@@ -362,14 +362,14 @@ def ConfigureCpuProfiler ( ) :
   # 讀取私人設定
   UserConf = Settings [ "Home" ]
   UserConf = f"{UserConf}/CpuProfiler"
-  if                         ( not os . path . isdir ( UserConf )         ) :
-    os . mkdir               ( UserConf                                     )
-  if                         (     os . path . isdir ( UserConf )         ) :
-    Hosts  = LoadJSON        ( f"{UserConf}/hosts.json"                     )
-    STS    = LoadJSON        ( f"{UserConf}/settings.json"                  )
-    KEYs   = STS . keys      (                                              )
-    for k in KEYs                                                           :
-      Settings [ k ] = STS   [ k                                            ]
+  if                         ( not os . path . isdir ( UserConf ) ) :
+    os . mkdir               ( UserConf                             )
+  if                         (     os . path . isdir ( UserConf ) ) :
+    Hosts  = LoadJSON        ( f"{UserConf}/hosts.json"             )
+    STS    = LoadJSON        ( f"{UserConf}/settings.json"          )
+    KEYs   = STS . keys      (                                      )
+    for k in KEYs                                                   :
+      Settings [ k ] = STS   [ k                                    ]
   CpuProfilerSettings [ "Root" ] = Settings [ "Root" ]
   # 讀取翻譯檔
   Language     = Settings   [ "Language"                            ]
