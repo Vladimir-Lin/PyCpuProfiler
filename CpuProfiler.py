@@ -36,14 +36,22 @@ from PyQt5.QtWidgets import QApplication , QWidget , qApp , QAction , QActionGro
 from PyQt5.QtWidgets import QSystemTrayIcon , QMenu , QGraphicsView , QGraphicsScene
 from PyQt5.QtWidgets import QGraphicsItem , QGraphicsPolygonItem
 
-Settings            = { }
-Locales             = { }
-Translations        = { }
-Hosts               = [ ]
-Httpd               = None
-Ghost               = None
-Tray                = None
-Machine             = None
+Settings     = { }
+Locales      = { }
+Translations = { }
+Hosts        = [ ]
+Httpd        = None
+Ghost        = None
+Tray         = None
+Machine      = None
+DebugLevels  =                   {
+  "NOTSET"   : logging . NOTSET  ,
+  "DEBUG"    : logging . DEBUG   ,
+  "INFO"     : logging . INFO    ,
+  "WARNING"  : logging . WARNING ,
+  "ERROR"    : logging . ERROR   ,
+  "CRITICAL" : logging . CRITICAL
+}
 
 def ActualFile ( filename ) :
   return os . path . dirname ( os . path . abspath (__file__) ) + "/" + filename
@@ -227,10 +235,12 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     hostGroup . setExclusive        ( False                             )
     hostGroup . triggered . connect ( self . doHostTriggered            )
     #
-    for H in Hosts :
-      hostAction = QAction   ( H [ "Hostname" ] , hostMenu )
-      hostMenu   . addAction ( hostAction )
-      hostGroup  . addAction ( hostAction )
+    KEYs = Hosts . keys ( )
+    for H in KEYs :
+      hostAction = QAction   ( H , hostMenu )
+      hostAction . setData   ( H            )
+      hostMenu   . addAction ( hostAction   )
+      hostGroup  . addAction ( hostAction   )
     #
     self . Actions [ "Machines"      ] = hostMenu
     self . Actions [ "MachinesGroup" ] = hostGroup
@@ -239,10 +249,11 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
   def doHostTriggered           ( self , action    ) :
     global Settings
     global Hosts
-    machineName = action . text (                  )
+    machineName = action . data (                  )
     Myself      = ActualFile    ( "CpuProfiler.py" )
-    CMD         = f"start pythonw {Myself} --machine=\"{machineName}\""
-    # CMD         = f"{Myself} --machine=\"{machineName}\""
+    # CMD         = f"start pythonw {Myself} --machine=\"{machineName}\""
+    # CMD         = f"start python {Myself} --machine=\"{machineName}\""
+    CMD         = f"python {Myself} --machine=\"{machineName}\""
     os . system                 ( CMD              )
     return True
 
@@ -250,63 +261,42 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     global Settings
     global Hosts
     global Translations
-    DBG           = Settings [ "Debug" ]
-    debugMenu     = menu      . addMenu ( Translations [ "Menu::Debugger" ] )
-    debugGroup    = QActionGroup ( debugMenu )
-    debugGroup    . setExclusive(True)
-    debugGroup    . triggered . connect ( self . doDebugTriggered )
-    # NOTSET
-    dbgAction     = QAction      ( "Nothing" , debugMenu , checkable= True , checked = ( "NOTSET" == DBG ) )
-    debugMenu     . addAction    ( dbgAction )
-    debugGroup    . addAction    ( dbgAction )
-    # DEBUG
-    dbgAction     = QAction      ( "Debug" , debugMenu , checkable= True , checked = ( "DEBUG" == DBG ) )
-    debugMenu     . addAction    ( dbgAction )
-    debugGroup    . addAction    ( dbgAction )
-    # INFO
-    dbgAction     = QAction      ( "Information" , debugMenu , checkable= True , checked = ( "INFO" == DBG ) )
-    debugMenu     . addAction    ( dbgAction )
-    debugGroup    . addAction    ( dbgAction )
-    # WARNING
-    dbgAction     = QAction      ( "Warning" , debugMenu , checkable= True , checked = ( "WARNING" == DBG ) )
-    debugMenu     . addAction    ( dbgAction )
-    debugGroup    . addAction    ( dbgAction )
-    # ERROR
-    dbgAction     = QAction      ( "Error" , debugMenu , checkable= True , checked = ( "ERROR" == DBG ) )
-    debugMenu     . addAction    ( dbgAction )
-    debugGroup    . addAction    ( dbgAction )
-    # CRITICAL
-    dbgAction     = QAction      ( "Critical" , debugMenu , checkable= True , checked = ( "CRITICAL" == DBG ) )
-    debugMenu     . addAction    ( dbgAction )
-    debugGroup    . addAction    ( dbgAction )
+    global DebugLevels
+    DBG = Settings [ "Debug" ]
+    if ( "NOTSET" == DBG ) :
+      return False
+    debugMenu    = menu      . addMenu ( Translations [ "Menu::Debugger" ] )
+    debugGroup   = QActionGroup ( debugMenu )
+    debugGroup   . setExclusive(True)
+    debugGroup   . triggered . connect ( self . doDebugTriggered )
+    KEYs         = DebugLevels . keys ( )
+    for D in KEYs :
+      MSG        = Translations [ f"Menu::Debug::{D}" ]
+      dbgAction  = QAction      ( MSG             ,
+                                  debugMenu       ,
+                                  checkable= True ,
+                                  checked = ( D == DBG ) )
+      dbgAction  . setData      ( D         )
+      debugMenu  . addAction    ( dbgAction )
+      debugGroup . addAction    ( dbgAction )
     #
     self . Actions [ "Debugger"      ] = debugMenu
     self . Actions [ "DebuggerGroup" ] = debugGroup
     return True
 
   def doDebugTriggered ( self , action ) :
-    Logger = logging . getLogger ( )
-    DMSG   = action . text ( )
-    Logger . info ( f"Switch logging to {DMSG}" )
-    if   ( "Nothing"     == DMSG ) :
-      Logger . setLevel ( logging . NOTSET   )
-      Settings [ "Debug" ] = "NOTSET"
-    elif ( "Debug"       == DMSG ) :
-      Logger . setLevel ( logging . DEBUG    )
-      Settings [ "Debug" ] = "DEBUG"
-    elif ( "Information" == DMSG ) :
-      Logger . setLevel ( logging . INFO     )
-      Settings [ "Debug" ] = "INFO"
-    elif ( "Warning"     == DMSG ) :
-      Logger . setLevel ( logging . WARNING  )
-      Settings [ "Debug" ] = "WARNING"
-    elif ( "Error"       == DMSG ) :
-      Logger . setLevel ( logging . ERROR    )
-      Settings [ "Debug" ] = "ERROR"
-    elif ( "Critical"    == DMSG ) :
-      Logger . setLevel ( logging . CRITICAL )
-      Settings [ "Debug" ] = "CRITICAL"
-    WriteSettings ( )
+    global DebugLevels
+    Logger = logging     . getLogger ( )
+    DMSG   = action      . text      ( )
+    DBG    = action      . data      ( )
+    # KEYs   = DebugLevels . keys      ( )
+    if ( DBG not in DebugLevels ) :
+      return False
+    LEVEL  = DebugLevels   [ DBG ]
+    Logger . info     ( f"Switch logging to {DBG}" )
+    Logger . setLevel ( LEVEL                      )
+    Settings [ "Debug" ] = DBG
+    WriteSettings     (                            )
     return True
 
   def onTrayActivated ( self , reason ) :
@@ -417,6 +407,8 @@ def CpuProfilerMain ( ) :
   return True
 
 def CpuProfilerView ( ) :
+  if ( len ( Machine ) <= 0 ) :
+    return False
   #
   global Settings
   global Locales
@@ -424,22 +416,33 @@ def CpuProfilerView ( ) :
   global Hosts
   global Tray
   #
-  ConfigureCpuProfiler ( )
+  ConfigureCpuProfiler                    (                 )
   #
-  app      = QApplication               ( sys . argv      )
+  app      = QApplication                 ( sys . argv      )
   # 設定資料
-  settings =                            {                 }
-  screen   = app    . primaryScreen     (                 )
-  rect     = screen . availableGeometry (                 )
-  size     = rect   . size              (                 )
-  settings [ "Width"  ] = size . width  (                 )
-  settings [ "Height" ] = size . height (                 )
-  settings [ "Path"   ] = "D:/Temp/CPU/Cuisine"
-  settings [ "URL"    ] = "http://192.168.0.98:16319"
+  settings =                              {                 }
+  screen   = app    . primaryScreen       (                 )
+  rect     = screen . availableGeometry   (                 )
+  size     = rect   . size                (                 )
+  #
+  Temp     = Settings                     [ "Temp"          ]
+  URL      = Hosts [ Machine ]            [ "URL"           ]
+  Username = Hosts [ Machine ]            [ "Username"      ]
+  Password = Hosts [ Machine ]            [ "Password"      ]
+  #
+  settings [ "Width"    ] = size . width  (                 )
+  settings [ "Height"   ] = size . height (                 )
+  settings [ "Path"     ] = f"{Temp}/{Machine}"
+  settings [ "URL"      ] = URL
+  settings [ "Username" ] = Username
+  settings [ "Password" ] = Password
+  settings [ "Machine"  ] = Machine
+  settings [ "TimeZone" ] = Settings      [ "TimeZone"      ]
   # 啟動CPU Chart
-  w        = CpuChart                   ( settings        )
-  w        . startup                    (                 )
-  sys      . exit                       ( app . exec_ ( ) )
+  w        = CpuChart                     ( settings        )
+  w        . setWindowTitle               ( Machine         )
+  w        . startup                      (                 )
+  sys      . exit                         ( app . exec_ ( ) )
   return True
 
 def SayCpuProfilerHelp ( ) :

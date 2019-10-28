@@ -3,6 +3,7 @@
   "Language"      : "zh-TW"                           ,
   "Debug"         : "DEBUG"                           ,
   "LOG"           : "D:/Temp/CPU/Log/CpuProfiler.txt" ,
+  "Temp"          : "D:/Temp/CPU"                     ,
   "TimeZone"      : "Asia/Taipei"                     ,
   "Username"      : "foxman"                          ,
   "Password"      : "la0marina"                       ,

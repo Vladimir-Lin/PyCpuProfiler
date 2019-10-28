@@ -1,9 +1,15 @@
 {
-  "Menu::Title"    : "CPU Profiler" ,
-  "Menu::Language" : "Language"     ,
-  "Menu::Machines" : "Machines"     ,
-  "Menu::Debugger" : "Debug"        ,
-  "Menu::Start"    : "Start"        ,
-  "Menu::Stop"     : "Stop"         ,
-  "Menu::Quit"     : "Quit"
+  "Menu::Title"           : "CPU Profiler" ,
+  "Menu::Language"        : "Language"     ,
+  "Menu::Machines"        : "Machines"     ,
+  "Menu::Debugger"        : "Debug"        ,
+  "Menu::Start"           : "Start"        ,
+  "Menu::Stop"            : "Stop"         ,
+  "Menu::Quit"            : "Quit"         ,
+  "Menu::Debug::NOTSET"   : "Nothing"      ,
+  "Menu::Debug::DEBUG"    : "Debug"        ,
+  "Menu::Debug::INFO"     : "Information"  ,
+  "Menu::Debug::WARNING"  : "Warning"      ,
+  "Menu::Debug::ERROR"    : "Error"        ,
+  "Menu::Debug::CRITICAL" : "Critical"
 }
