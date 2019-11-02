@@ -124,6 +124,12 @@ CpuProfilerSettings =                      { \
   "Running"         : True                 , \
 }
 
+def OpenMachine ( machineName ) :
+  global Tray
+  Myself = ActualFile ( "CpuProfiler.py" )
+  CMD    = f"start pythonw {Myself} --machine=\"{machineName}\""
+  os . system         ( CMD              )
+
 """ 系統選單 """
 class CpuProfilerMenu ( QSystemTrayIcon ) :
   # emitShowUser = pyqtSignal ( bool , dict )
@@ -252,8 +258,6 @@ class CpuProfilerMenu ( QSystemTrayIcon ) :
     machineName = action . data (                  )
     Myself      = ActualFile    ( "CpuProfiler.py" )
     CMD         = f"start pythonw {Myself} --machine=\"{machineName}\""
-    # CMD         = f"start python {Myself} --machine=\"{machineName}\""
-    # CMD         = f"python {Myself} --machine=\"{machineName}\""
     os . system                 ( CMD              )
     return True
 
@@ -327,6 +331,7 @@ def CpuDaemonMain ( ) :
   Password  = Settings            [ "Password" ]
   ConfigureCpu                    ( { "Daemon"   : Ghost       ,
                                       "Stop"     : StopRunning ,
+                                      "Machine"  : OpenMachine ,
                                       "Path"     : Path        ,
                                       "TimeZone" : TZ          ,
                                       "Root"     : Root        ,
